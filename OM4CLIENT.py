@@ -7,8 +7,6 @@ app = Flask(__name__)
 
 config = configparser.ConfigParser()
 config.read('mysql.ini')
-config.get('mysql', 'ip')
-
 connection = pymysql.connect(host=str(config.get('mysql', 'ip')),
                              port=int(config.get('mysql', 'port')),
                              user=str(config.get('mysql', 'user')),
