@@ -1,5 +1,6 @@
-from flask import Flask
-import json
+from flask import Flask, jsonify
+import os
+# import json
 import pymysql.cursors
 import configparser
 
@@ -16,7 +17,7 @@ connection = pymysql.connect(host=str(config.get('mysql', 'ip')),
                              cursorclass=pymysql.cursors.DictCursor)
 
 
-@app.route('/data')
+@app.route('/', methods=['GET'])
 def send_json():
     try:
         with connection.cursor() as cursor:
@@ -35,9 +36,10 @@ def send_json():
             f_liang = cursor.fetchall()
             result['辆数'] = f_liang[0]['COUNT(td.traindetail_id)']
 
-            return json.dumps(result)
+            return jsonify(result)
     finally:
         connection.close()
 
 if __name__ == '__main__':
-    app.run()
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
