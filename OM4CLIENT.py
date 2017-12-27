@@ -1,25 +1,27 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
+import requests
 import os
 # import json
 import pymysql.cursors
 import configparser
 
 app = Flask(__name__)
-
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 config = configparser.ConfigParser()
-config.read('mysql.ini')
-connection = pymysql.connect(host=str(config.get('mysql', 'ip')),
-                             port=int(config.get('mysql', 'port')),
-                             user=str(config.get('mysql', 'user')),
-                             password=str(config.get('mysql', 'password')),
-                             db=str(config.get('mysql', 'db')),
-                             charset='utf8mb4',
-                             cursorclass=pymysql.cursors.DictCursor)
+config.read(os.path.join(BASE_DIR, 'mysql.ini'))
 
 
 @app.route('/', methods=['GET'])
 def send_json():
     try:
+        connection = pymysql.connect(host=str(config.get('mysql', 'ip')),
+                                     port=int(config.get('mysql', 'port')),
+                                     user=str(config.get('mysql', 'user')),
+                                     password=str(config.get('mysql', 'password')),
+                                     db=str(config.get('mysql', 'db')),
+                                     charset='utf8mb4',
+                                     cursorclass=pymysql.cursors.DictCursor)
+
         with connection.cursor() as cursor:
             sql_lie = "SELECT COUNT(0) FROM train t WHERE t.train_comedate BETWEEN %s AND %s"
             sql_liang = "SELECT COUNT(td.traindetail_id) FROM traindetail td LEFT JOIN train t on td.train_id = t.train_id WHERE t.train_comedate BETWEEN %s AND %s"
@@ -39,6 +41,7 @@ def send_json():
             return jsonify(result)
     finally:
         connection.close()
+        request.close()
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))

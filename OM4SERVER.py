@@ -8,7 +8,6 @@ app = Flask(__name__)
 
 @app.route('/')
 def read_json():
-
     r = requests.get('http://0.0.0.0:5000')
     return r.content
 
