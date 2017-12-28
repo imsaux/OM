@@ -21,22 +21,34 @@ def send_json():
                                      db=str(config.get('mysql', 'db')),
                                      charset='utf8mb4',
                                      cursorclass=pymysql.cursors.DictCursor)
-
-        with connection.cursor() as cursor:
+        _v = config.get('mysql', 'version')
+        sql_lie = sql_liang = sql_alarm = ''
+        if _v == '2.6':
             sql_lie = "SELECT COUNT(0) FROM train t WHERE t.train_comedate BETWEEN %s AND %s"
             sql_liang = "SELECT COUNT(td.traindetail_id) FROM traindetail td LEFT JOIN train t on td.train_id = t.train_id WHERE t.train_comedate BETWEEN %s AND %s"
             sql_alarm = "SELECT problemtype, COUNT(problemtype) FROM alarmdetail WHERE inserttime > %s group by problemtype"
-            cursor.execute(sql_alarm, ('2017-01-01'))
-            f = cursor.fetchall()
-            result = dict()
-            for l in f:
-                result[l['problemtype']] = l['COUNT(problemtype)']
-            cursor.execute(sql_lie, ('2017-01-01', '2017-12-31'))
-            f_lie = cursor.fetchall()
-            result['列数'] = f_lie[0]['COUNT(0)']
-            cursor.execute(sql_liang, ('2017-01-01', '2017-12-31'))
-            f_liang = cursor.fetchall()
-            result['辆数'] = f_liang[0]['COUNT(td.traindetail_id)']
+        elif _v == '2.5':
+            sql_lie = "SELECT COUNT(0) FROM train t WHERE t.train_comedate BETWEEN %s AND %s"
+            sql_liang = "SELECT COUNT(td.traindetail_id) FROM traindetail td LEFT JOIN train t on td.train_id = t.train_id WHERE t.train_comedate BETWEEN %s AND %s"
+            sql_alarm = "SELECT problemtype, COUNT(problemtype) FROM alarmdetail WHERE inserttime > %s group by problemtype"
+
+        with connection.cursor() as cursor:
+            if sql_alarm != '':
+                cursor.execute(sql_alarm, ('2017-01-01'))
+                f = cursor.fetchall()
+                result = dict()
+                for l in f:
+                    result[l['problemtype']] = l['COUNT(problemtype)']
+
+            if sql_lie != '':
+                cursor.execute(sql_lie, ('2017-01-01', '2017-12-31'))
+                f_lie = cursor.fetchall()
+                result['列数'] = f_lie[0]['COUNT(0)']
+
+            if sql_liang != '':
+                cursor.execute(sql_liang, ('2017-01-01', '2017-12-31'))
+                f_liang = cursor.fetchall()
+                result['辆数'] = f_liang[0]['COUNT(td.traindetail_id)']
 
             return jsonify(result)
     finally:
