@@ -8,7 +8,7 @@ import configparser
 app = Flask(__name__)
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 config = configparser.ConfigParser()
-config.read(os.path.join(BASE_DIR, 'mysql.ini'))
+config.read(os.path.join(BASE_DIR, 'config.ini'))
 
 
 @app.route('/', methods=['GET'])
@@ -44,5 +44,5 @@ def send_json():
         request.close()
 
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', int(config.get('API', 'port'))))
     app.run(host='0.0.0.0', port=port)
