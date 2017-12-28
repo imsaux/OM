@@ -33,11 +33,11 @@ def send_json():
             sql_alarm = "SELECT problemtype, COUNT(problemtype) FROM alarmdetail WHERE inserttime > %s group by problemtype"
 
         with connection.cursor() as cursor:
+            result = dict()
             try:
                 if sql_alarm != '':
                     cursor.execute(sql_alarm, ('2017-01-01'))
                     f = cursor.fetchall()
-                    result = dict()
                     for l in f:
                         result[l['problemtype']] = l['COUNT(problemtype)']
             except:
@@ -60,6 +60,8 @@ def send_json():
                 result['辆数'] = '数据异常'
 
             return jsonify(result)
+    except Exception as e:
+        print(repr(e))
     finally:
         connection.close()
         request.close()
