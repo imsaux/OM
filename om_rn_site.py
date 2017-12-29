@@ -1,5 +1,5 @@
 from flask import Flask, jsonify, request
-import requests
+# import requests
 import os
 # import json
 import pymysql.cursors
@@ -30,7 +30,7 @@ def send_json():
         elif _v == '2.5':
             sql_lie = "SELECT COUNT(0) FROM train t WHERE t.train_comedate BETWEEN %s AND %s"
             sql_liang = "SELECT COUNT(td.traindetail_id) FROM traindetail td LEFT JOIN train t on td.train_id = t.train_id WHERE t.train_comedate BETWEEN %s AND %s"
-            sql_alarm = "SELECT problemtype, COUNT(problemtype) FROM alarmdetail WHERE inserttime > %s group by problemtype"
+            sql_tx = "SELECT problemtype, COUNT(problemtype) FROM alarmdetail WHERE inserttime > %s group by problemtype"
 
         with connection.cursor() as cursor:
             result = dict()
