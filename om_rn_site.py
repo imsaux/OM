@@ -30,16 +30,20 @@ def send_json():
         elif _v == '2.5':
             sql_lie = "SELECT COUNT(0) FROM train t WHERE t.train_comedate BETWEEN %s AND %s"
             sql_liang = "SELECT COUNT(td.traindetail_id) FROM traindetail td LEFT JOIN train t on td.train_id = t.train_id WHERE t.train_comedate BETWEEN %s AND %s"
-            sql_tx = "SELECT problemtype, COUNT(problemtype) FROM alarmdetail WHERE inserttime > %s group by problemtype"
+            sql_alarm = """SELECT tx.szProblemType, count(tx.szProblemType)
+FROM txdetail tx LEFT JOIN traindetail td on tx.traindetail_id=td.TrainDetail_ID LEFT JOIN train t on td.Train_ID=t.Train_ID
+WHERE 1=1
+and t.Train_ComeDate > %s
+and tx.szProblemNum > 0
+GROUP BY tx.szProblemType"""
 
         with connection.cursor() as cursor:
             result = dict()
             try:
-                if sql_alarm != '':
-                    cursor.execute(sql_alarm, ('2017-01-01'))
-                    f = cursor.fetchall()
-                    for l in f:
-                        result[l['problemtype']] = l['COUNT(problemtype)']
+                cursor.execute(sql_alarm, ('2017-01-01'))
+                f = cursor.fetchall()
+                for l in f:
+                    result[l['problemtype']] = l['COUNT(problemtype)']
             except:
                 result['报警'] = '数据异常'
 
