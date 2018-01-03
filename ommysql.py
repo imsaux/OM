@@ -18,21 +18,21 @@ class mysqldb():
                                      cursorclass=pymysql.cursors.DictCursor)
 
 
-    def _carriages(self, _from, _to):
+    def carriages(self, _from, _to):
         if self.version == '25':
             sql = "SELECT COUNT(td.traindetail_id) FROM traindetail td LEFT JOIN train t on td.train_id = t.train_id WHERE t.train_comedate BETWEEN %s AND %s"
         if self.version == '26':
             sql = "SELECT COUNT(td.traindetail_id) FROM traindetail td LEFT JOIN train t on td.train_id = t.train_id WHERE t.train_comedate BETWEEN %s AND %s"
         return self._execute(sql, '车辆数', (_from, _to))
 
-    def _trains(self, _from, _to):
+    def trains(self, _from, _to):
         if self.version == '25':
             sql = "SELECT COUNT(0) FROM train t WHERE t.train_comedate BETWEEN %s AND %s"
         if self.version == '26':
             sql = "SELECT COUNT(0) FROM train t WHERE t.train_comedate BETWEEN %s AND %s"
         return self._execute(sql, '车列数', (_from, _to))
 
-    def _warning(self, _from, _to):
+    def warning(self, _from, _to):
         if self.version == '25':
             sql = """SELECT tx.szProblemType, count(tx.szProblemType)
 FROM txdetail tx LEFT JOIN traindetail td on tx.traindetail_id=td.TrainDetail_ID LEFT JOIN train t on td.Train_ID=t.Train_ID
