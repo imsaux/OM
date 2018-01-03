@@ -1,5 +1,5 @@
 import os
-import pymysql.cursors
+import ommysql
 import configparser
 from multiprocessing import Process
 import logging
@@ -11,11 +11,6 @@ if os.name == 'nt':
 elif os.name == 'posix':
     pass
 
-logging.basicConfig(level=logging.DEBUG,
-                format='%(asctime)s %(filename)s[line:%(lineno)d] > %(funcName)s > %(levelname)s %(message)s',
-                datefmt='%Y%b%d_%H%M%S',
-                filename='%Y%b%d_%H%M%S.log',
-                filemode='a')
 
 class SmallestPythonService(win32serviceutil.ServiceFramework):
     _svc_name_ = "驻站数据传输服务"
@@ -33,15 +28,32 @@ class SmallestPythonService(win32serviceutil.ServiceFramework):
         self.hWaitStop = win32event.CreateEvent(None, 0, 0, None)
         self.isAlive = True
 
-    def SvcStop(self):
-        logging.info('服务即将关闭')
-        self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
-        win32event.SetEvent(self.hWaitStop)
-        logging.info('服务已关闭')
+    # def SvcStop(self):
+    #     logging.info('服务即将关闭')
+    #     self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
+    #     win32event.SetEvent(self.hWaitStop)
+    #     logging.info('服务已关闭')
+    #
+    # def SvcDoRun(self):
+    #     logging.info('服务运行中')
+    #     win32event.WaitForSingleObject(self.hWaitStop, win32event.INFINITE)
 
     def SvcDoRun(self):
-        logging.info('服务运行中')
-        win32event.WaitForSingleObject(self.hWaitStop, win32event.INFINITE)
+        import time
+        logging.info("do!")
+        while self.isAlive:
+            logging.info("alive!")
+            time.sleep(1)
+            # 等待服务被停止
+        # win32event.WaitForSingleObject(self.hWaitStop, win32event.INFINITE)
+
+    def SvcStop(self):
+        # 先告诉SCM停止这个过程
+        logging.info("Stop!")
+        self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
+        # 设置事件
+        win32event.SetEvent(self.hWaitStop)
+        self.isAlive = False
 
 if __name__=='__main__':
     win32serviceutil.HandleCommandLine(SmallestPythonService)
