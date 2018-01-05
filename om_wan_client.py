@@ -4,6 +4,9 @@ import pymysql.cursors
 import configparser
 import time
 import os
+import datetime
+from urllib.request import urlopen
+import json
 
 if os.name == 'nt':
     import win32service
@@ -25,16 +28,16 @@ class omservice(win32serviceutil.ServiceFramework):
         BASE_DIR = os.path.dirname(os.path.abspath(__file__))
         config = configparser.ConfigParser()
         config.read(os.path.join(BASE_DIR, 'config.ini'))
-        self.version = config.get('mysql', 'version')
-        self.connection = pymysql.connect(host=str(config.get('mysql', 'ip')),
-                                     port=int(config.get('mysql', 'port')),
-                                     user=str(config.get('mysql', 'user')),
-                                     password=str(config.get('mysql', 'password')),
-                                     db=str(config.get('mysql', 'db')),
+        self.stat_start_time = str(config.get('lan', 'stat_time')).zfill(2)
+        self.version = config.get('lan', 'mysql_version')
+        self.connection = pymysql.connect(host=str(config.get('lan', 'mysql_ip')),
+                                     port=int(config.get('lan', 'mysql_port')),
+                                     user=str(config.get('lan', 'mysql_user')),
+                                     password=str(config.get('lan', 'mysql_password')),
+                                     db=str(config.get('lan', 'mysql_db')),
                                      charset='utf8mb4',
                                      cursorclass=pymysql.cursors.DictCursor)
 
-        self.run = True
 
     def _getLogger(self):
         logger = logging.getLogger('[OM Service]')
@@ -53,17 +56,17 @@ class omservice(win32serviceutil.ServiceFramework):
 
     def carriages(self, _from, _to):
         if self.version == '25':
-            sql = "SELECT COUNT(td.traindetail_id) FROM traindetail td LEFT JOIN train t on td.train_id = t.train_id WHERE t.train_comedate BETWEEN %s AND %s"
+            sql = "SELECT '车辆数', COUNT(td.traindetail_id) FROM traindetail td LEFT JOIN train t on td.train_id = t.train_id WHERE t.train_comedate BETWEEN %s AND %s"
         if self.version == '26':
-            sql = "SELECT COUNT(td.traindetail_id) FROM traindetail td LEFT JOIN train t on td.train_id = t.train_id WHERE t.train_comedate BETWEEN %s AND %s"
-        return self._execute(sql, '车辆数', (_from, _to))
+            sql = "SELECT '车辆数', COUNT(td.traindetail_id) FROM traindetail td LEFT JOIN train t on td.train_id = t.train_id WHERE t.train_comedate BETWEEN %s AND %s"
+        return self._execute(sql, ('车辆数', 'COUNT(td.traindetail_id)'), (_from, _to))
 
     def trains(self, _from, _to):
         if self.version == '25':
-            sql = "SELECT COUNT(0) FROM train t WHERE t.train_comedate BETWEEN %s AND %s"
+            sql = "SELECT '车列数', COUNT(0) FROM train t WHERE t.train_comedate BETWEEN %s AND %s"
         if self.version == '26':
-            sql = "SELECT COUNT(0) FROM train t WHERE t.train_comedate BETWEEN %s AND %s"
-        return self._execute(sql, '车列数', (_from, _to))
+            sql = "SELECT '车列数', COUNT(0) FROM train t WHERE t.train_comedate BETWEEN %s AND %s"
+        return self._execute(sql, ('车列数', 'COUNT(0)'), (_from, _to))
 
     def warning(self, _from, _to):
         _r = None
@@ -74,9 +77,10 @@ WHERE 1=1
 and t.Train_ComeDate BETWEEN %s AND %s
 and tx.szProblemNum > 0
 GROUP BY tx.szProblemType"""
+            _r = self._execute(sql, ('tx.szProblemType', 'count(tx.szProblemType)'), (_from, _to))
         if self.version == '26':
             sql = "SELECT problemtype, COUNT(problemtype) FROM alarmdetail WHERE inserttime BETWEEN %s AND %s group by problemtype"
-            _r = self._execute(sql, 'problemtype', (_from, _to))
+            _r = self._execute(sql, ('problemtype', "COUNT(problemtype)"), (_from, _to))
         return _r
 
     def _execute(self, sql, _key, params):
@@ -86,26 +90,28 @@ GROUP BY tx.szProblemType"""
                 cursor.execute(sql, params)
                 f = cursor.fetchall()
                 for l in f:
-                    result[_key] = l[_key]
-                self.logger.info(repr(result))
+                    result[l[_key[0]]] = l[_key[1]]
                 return result
-            except pymysql.MySQLError:
-                self.connection.connect()
             except Exception as e:
                 self.logger.error(repr(e))
                 self.logger.error(f)
-                result[_key] = '数据异常'
+                self.logger.error(repr(params))
+                self.logger.error(repr(_key))
+                result[_key[0]] = '数据异常'
             # return result
 
     def SvcDoRun(self):
         while True:
-            sql = "SELECT problemtype, COUNT(problemtype) FROM alarmdetail WHERE inserttime BETWEEN %s AND %s group by problemtype"
-            _r = self._execute(sql, 'problemtype', ('20170101', '20171231'))
+            _now = datetime.datetime.now()
+            _from = _now.strftime('%Y%m%d') + self.stat_start_time + '0000'
+            _to = _now.strftime('%Y%m') + str(_now.day + 1).zfill(2) + self.stat_start_time + '0000'
+            _r = self.warning(_from, _to)
             self.logger.info(repr(_r))
+            urlopen('http://')
             time.sleep(30)
 
     def SvcStop(self):
-        self.logger.info("service is stop....")
+        self.logger.info("服务正在关闭...")
         self.connection.close()
         self.ReportServiceStatus(win32service.SERVICE_STOP_PENDING)
         win32event.SetEvent(self.hWaitStop)
