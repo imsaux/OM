@@ -17,7 +17,7 @@ def read_json():
         r = requests.get(url)
         result[site] = json.loads(r.content.decode(encoding='utf8'), encoding='gbk')
 
-    return repr(result)
+    return repr(result) + '\n'
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', int(config.get('lan', 'server_port'))))
