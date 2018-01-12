@@ -133,6 +133,7 @@ class omservice(win32serviceutil.ServiceFramework):
             _r.update(self.trains(_from, _to))
             _r.update(self.carriages(_from, _to))
             _r.update(self.sitename())
+            _r['datetime'] = _now.strftime('%Y%m%d%H%M%S')
             self.logger.info(_r)
             try:
                 _url = "http://%s:%s/add_data/" % (self.wan_ip, self.wan_port)
