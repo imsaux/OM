@@ -36,6 +36,8 @@ class omservice(win32serviceutil.ServiceFramework):
                                      db=str(config.get('lan', 'mysql_db')),
                                      charset='utf8mb4',
                                      cursorclass=pymysql.cursors.DictCursor)
+        self.wan_ip = config.get('wan', 'cloudy_ip')
+        self.wan_port = str(config.get('wan', 'cloudy_port'))
 
 
     def _getLogger(self):
@@ -133,7 +135,8 @@ class omservice(win32serviceutil.ServiceFramework):
             _r.update(self.sitename())
             self.logger.info(_r)
             try:
-                r = requests.post("http://127.0.0.1:8000/add_data/", data=_r)
+                _url = "http://%s:%s/add_data/" % (self.wan_ip, self.wan_port)
+                r = requests.post(_url, data=_r)
             except Exception as e:
                 self.logger.error(repr(e))
                 self.logger.info('状态码: ' + repr(r))
