@@ -125,10 +125,11 @@ class omservice(win32serviceutil.ServiceFramework):
         while True:
             import requests
             _now = datetime.datetime.now()
+            _to = _now.strftime('%Y%m%d') + self.stat_start_time + '0000'
+            _from = _now.strftime('%Y%m') + str(_now.day - 1).zfill(2) + self.stat_start_time + '0000'
+            self.logger.info(_from + ' -> ' + _to)
             _from = '20170101000000'
             _to = '20171231000000'
-            # _from = _now.strftime('%Y%m%d') + self.stat_start_time + '0000'
-            # _to = _now.strftime('%Y%m') + str(_now.day + 1).zfill(2) + self.stat_start_time + '0000'
             _r = self.warning(_from, _to)
             _r.update(self.trains(_from, _to))
             _r.update(self.carriages(_from, _to))
@@ -142,7 +143,7 @@ class omservice(win32serviceutil.ServiceFramework):
                 self.logger.error(repr(e))
                 self.logger.info('状态码: ' + repr(r))
             finally:
-                time.sleep(30)
+                time.sleep(60*15)
 
     def SvcStop(self):
         self.logger.info("服务正在关闭...")
