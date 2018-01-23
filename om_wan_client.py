@@ -38,6 +38,7 @@ class omservice(win32serviceutil.ServiceFramework):
                                      cursorclass=pymysql.cursors.DictCursor)
         self.wan_ip = config.get('wan', 'cloudy_ip')
         self.wan_port = str(config.get('wan', 'cloudy_port'))
+        self.site_name = str(config.get('site', 'code'))
 
 
     def _getLogger(self):
@@ -133,7 +134,7 @@ class omservice(win32serviceutil.ServiceFramework):
             _r = self.warning(_from, _to)
             _r.update(self.trains(_from, _to))
             _r.update(self.carriages(_from, _to))
-            _r.update(self.sitename())
+            _r.update({'站点': self.site_name})
             _r['datetime'] = _now.strftime('%Y%m%d%H%M%S')
             self.logger.info(_r)
             try:
