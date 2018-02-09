@@ -38,6 +38,7 @@ class omservice(win32serviceutil.ServiceFramework):
                                      cursorclass=pymysql.cursors.DictCursor)
         self.wan_ip = config.get('wan', 'cloudy_ip')
         self.wan_port = str(config.get('wan', 'cloudy_port'))
+        self.wan_interval_hour = float(config.get('wan', 'interval_hour'))
         self.site_name = str(config.get('site', 'code'))
 
 
@@ -123,8 +124,8 @@ class omservice(win32serviceutil.ServiceFramework):
             # return result
 
     def SvcDoRun(self):
+        import requests
         while True:
-            import requests
             _now = datetime.datetime.now()
             _to = _now.strftime('%Y%m%d') + self.stat_start_time + '0000'
             _from = _now.strftime('%Y%m') + str(_now.day - 1).zfill(2) + self.stat_start_time + '0000'
@@ -144,7 +145,7 @@ class omservice(win32serviceutil.ServiceFramework):
                 self.logger.error(repr(e))
                 self.logger.info('状态码: ' + repr(r))
             finally:
-                time.sleep(60*15)
+                time.sleep(60*60*self.wan_interval_hour)
 
     def SvcStop(self):
         self.logger.info("服务正在关闭...")
